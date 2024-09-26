@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:ProgramLanguage.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+             x:Class="ProgramLanguage.Views.MainView"
+             x:DataType="vm:MainViewModel">
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in an IDE,
+         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+    <vm:MainViewModel />
+  </Design.DataContext>
+
+	<Grid Background="#666" ShowGridLines="False" ColumnDefinitions="*,*,*" RowDefinitions="Auto,*,Auto">
+		
+	<!--Верхние кнопочьки-->
+		<StackPanel Orientation="Horizontal" Grid.ColumnSpan="3" Background="#222" Spacing="5">
+			<Button Content="Лексический анализ" Command="{Binding LexAnalysisCommand}"/>
+			<Button Content="LL-Разбор"  />
+		</StackPanel>
+		
+		<!--Текст программы-->
+		<Grid Grid.Row="1" Grid.Column="0" Margin="5" Grid.ColumnSpan="2" RowDefinitions="Auto,*">
+			<Label Grid.Row="0" Content="Текст программы"/>
+			<TextBox Text="{Binding Code}" Grid.Row="1"/>
+		</Grid>
+		
+		<!--Нижняя панель с ошибками-->
+		<Grid Grid.Row="2" Grid.Column="0" Background="#777" RowDefinitions="*,*,*,Auto" Grid.ColumnSpan="3">
+			<Label Content="Позиция ошибки" Grid.ColumnSpan="2"/>
+			<TextBox Text="{Binding TextNumError}" Grid.Row="1" Grid.ColumnSpan="2" IsReadOnly="True"/>
+			
+			<Label Content="Обнаруженные ошибки" Grid.Row="2" />
+			<TextBox Text="{Binding TextErrors}" Grid.Row="3" Height="100" IsReadOnly="True"/>
+		</Grid>
+
+		<!--Лексемы-->
+		<Grid Grid.Row="1" Grid.Column="2" RowDefinitions="Auto,*" Margin="5">
+			<Label Content="Обнаруженные лексемы"/>
+			<TextBox Text="{Binding Lexem}" Background="#333" Grid.Row="1" IsReadOnly="True"/>
+		</Grid>
+		
+	</Grid>
+	
+</UserControl>
