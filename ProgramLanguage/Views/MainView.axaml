@@ -21,10 +21,7 @@
 		</StackPanel>
 		
 		<!--Текст программы-->
-		<Grid Grid.Row="1" Grid.Column="0" Margin="5" Grid.ColumnSpan="2" RowDefinitions="Auto,*">
-			<Label Grid.Row="0" Content="Текст программы"/>
-			<TextBox Text="{Binding Code}" Grid.Row="1"/>
-		</Grid>
+		<TextBox Text="{Binding Code}" Grid.Row="1" Watermark="Текст программы" AcceptsReturn="True" Grid.Column="0" Margin="5" Grid.ColumnSpan="2"/>
 		
 		<!--Нижняя панель с ошибками-->
 		<Grid Grid.Row="2" Grid.Column="0" Background="#777" RowDefinitions="*,*,*,Auto" Grid.ColumnSpan="3">

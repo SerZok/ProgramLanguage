@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static ProgramLanguage.Model.LexAnal;
+using static ProgramLanguage.Model.Types;
 
 namespace ProgramLanguage.Model
 {
@@ -13,18 +14,23 @@ namespace ProgramLanguage.Model
     {
         public LexAnal()
         {
-
-        }
-        public string Scanner()
-        {
-            var res = Code;
-
-            //res += tToken;
-            return res; //<код_токена, атрибут>
+            InitDataType();
         }
 
-        public tToken[] SostAndToken = new tToken[]
+        private string _code;
+        public string Code
         {
+            get => _code;
+            set
+            {
+                _code = value;
+                OnPropertyChanged("Code");
+            }
+        }
+
+        public tToken[] SostAndToken =
+        [
+            //code, attr, name
             new (10, 0, ";"),             // {-1}
             new (11, 0, ","),             // {-2}
             new (12, 0, "["),             // {-3}
@@ -49,64 +55,328 @@ namespace ProgramLanguage.Model
             new (31, 0, "id"),            // {-22}
             new (35, 0, "("),             // {-23}
             new (36, 0, ")"),             // {-24}
+        ];
+
+        private List<char> Letters = new List<char> { '_', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
+        private List<char> Numbers = new List<char> { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+
+        /// <summary>
+        /// Таблица состояний ( переходы между состояниями автомата )
+        /// Отрицательные значения - конечное состояние
+        /// </summary>
+        private readonly int[,] _TP = new int[,]
+        {
+            //Строки - символ
+            //Столбцы - состояния
+            //Крч.            0      1       2       3       4       5       6       7       8       9       10      11      12      13      14      15      16      17 
+            /*1     ;   */  {-1,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*2     ,   */	{-2,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*3     [   */	{-3,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*4     ]   */	{-4,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*5     +   */	{-5,    -9,     -11,    -13,    -15,    -28,    -28,     13,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*6     -   */	{-6,    -9,     -11,    -13,    -15,    -28,    -28,     13,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*7     *   */	{-7,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*8     /   */	{-8,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*9     =   */	{1,     -10,    -12,    -14,    -16,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*10    <   */	{2,     -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*11    >   */	{3,     -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*12    !   */	{4,     -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*13    |   */	{5,     -9,     -11,    -13,    -15,    -17,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*14    &   */	{6,     -9,     -11,    -13,    -15,    -28,    -18,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*15    e   */	{-28,   -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,      7,     11,    -27,    -28,    -19,      7,    -28,    -25},
+            /*16    .   */	{16,    -9,     -11,    -13,    -15,    -28,    -28,    -28,     17,    -22,      8,     11,    -27,    -28,    -19,    -21,     17,    -25},
+            /*17 letter */	{9,     -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,      9,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*18  num   */	{10,    -9,     -11,    -13,    -15,    -28,    -28,     14,     15,      9,     10,     11,    -27,     14,     14,     15,    -28,    -25},
+            /*19    #   */	{11,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,    -26,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*20  space */	{12,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,     12,    -28,    -19,    -21,    -28,    -25},
+            /*21   tab  */	{12,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,     12,    -28,    -19,    -21,    -28,    -25},
+            /*22    if  */	{12,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,     12,    -28,    -19,    -21,    -28,    -25},
+            /*23   /r/n  */	{12,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,     12,    -28,    -19,    -21,    -28,    -25},
+            /*24    (   */	{-23,   -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*25    )   */	{-24,   -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
+            /*26  other */	{-28,   -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25}
+
+            /*
+             * -28 - ошибка
+            */
         };
 
-        private string _code;
-        public string Code { get => _code;
-            set
+        private List<tElemLbl> Lbls = new List<tElemLbl>();
+        private List<tElemIde> Idents = new List<tElemIde>();
+        private List<tElemKey> ElemKeys = new List<tElemKey>{
+            new ("and",         "*"),
+            new ("beginBlock",  "beginBlock"),		//{1}
+	        new ("end",         "end" ),			//{3}
+	        new ("endBlock",    "endBlock"),		//{4}
+	        new ("endp",        "endp" ),		    //{5}
+	        new ("false",       "false"),           //{6}
+            new ("if",          "if" ),				//{7}
+	        new ("or",          "+"),               //{8}
+            new ("startp",      "startp" ),	        //{9}
+	        new ("true",        "true"),
+            new ("z",           "zzz" )				//{10}
+        };
+
+        private int KolLbl = -1;
+        private int KolId = 2;
+
+        private int countLines = 1;
+        private int countChar = 1;
+
+        /// <summary>
+        /// Первый символ
+        /// </summary>
+        private int f = 0;
+
+        /// <summary>
+        /// Последний символ
+        /// </summary>
+        private int r = 0;
+        public void InitDataType()
+        {
+            Idents.Clear();
+            Idents.Add(new tElemIde { Lex = "int",      Cat = 1, Tip = 1, Size = 4, Addr = -1 });
+            Idents.Add(new tElemIde { Lex = "float",    Cat = 1, Tip = 2, Size = 4, Addr = -1 });
+            Idents.Add(new tElemIde { Lex = "bool",     Cat = 1, Tip = 3, Size = 1, Addr = -1 });
+
+            KolLbl = -1;
+            KolId = 2;
+        }
+        private int BinarySearchLexKey(string lex)
+        {
+            lex = lex.ToUpper();
+            return ElemKeys.FindIndex(x => x.Lex == lex);
+        }
+        private int SearchLexLbl(string lex)
+        {
+            lex = lex.ToUpper();
+            var lblIndex = Lbls.FindIndex(l => l.Lex == lex);
+            if (lblIndex == -1)
             {
-                _code = value;
-                OnPropertyChanged("Code");
+                KolLbl++;
+                Lbls.Add(new tElemLbl { Lex = lex, Index = -1 });
+                return KolLbl;
+            }
+            return lblIndex;
+        }
+
+        /// <summary>
+        /// Поиск переменной по лексеме, если нет, то создает новую
+        /// </summary>
+        /// <param name="lex"></param>
+        /// <returns></returns>
+        private int SearchLexId(string lex) 
+        {
+            //lex = lex.ToUpper();
+            var idIndex = Idents.FindIndex(i => i.Lex == lex);
+            if (idIndex == -1) //Если не  нашел переменную
+            {
+                KolId++;
+                Idents.Add(new tElemIde { Lex = lex, Cat = 0, Tip = 0, Size = 0, Addr = -1 });
+                return KolId;
+            }
+            return idIndex;
+        }
+        public void CountPosition()
+        {
+            // Если это символ возврата каретки (\r), игнорируем его, так как следующая может быть \n
+            if (Code[r] == '\r' && r + 1 < Code.Length && Code[r + 1] == '\n')
+            {
+                // Обработка для \r\n
+                countLines++;    // Увеличиваем счётчик строк
+                countChar = 1;   // Обнуляем счётчик символов для новой строки
+                r++;             // Пропускаем \n после \r
+            }
+            else if (Code[r] == '\n' || Code[r] == '\r')
+            {
+                // Обработка для одиночных \n или \r (если они не идут вместе как \r\n)
+                countLines++;
+                countChar = 1;
+            }
+            else
+            {
+                countChar++; // Увеличиваем счётчик символов для любой другой ситуации
             }
         }
 
-        private List<char> _letters;
-        private List<int> _ints;
-        private int[][] _TP;
-        private struct tElemKey
+        /// <summary>
+        /// Список токенов
+        /// </summary>
+        private List<tToken> tokens = new List<tToken>();
+        
+        /// <summary>
+        /// Поиск символа в таблице состояний _TP
+        /// </summary>
+        /// <param name="sym"></param>
+        /// <returns></returns>
+        private int NomStrOfTP(char sym)
         {
-            private string Name { get; set; }
-            private string Lex { get; set; }
-        }
-        private struct tElSp
-        {
-            private int Info { get; set; }
-            
-        }
-        private struct tElemLbl
-        {
-            private string Lex { get; set; }
-            private int Index { get; set; }
-        }
-        private struct tElemIde
-        {
-            private string Lex { get; set; }
-            private int Cat { get; set; }
-            private int Tip { get; set; }
-            private int Size {  get; set; }
-            private int Addr {  get; set; }
-        }
-        public struct tToken
-        {
-            public int Code { get; set; }
-            public int Attr { get; set; } //указывает на запись в таблице идентификаторов, соответствующую данному токену.
-            public string Name { get; set; }
-            public int LexBeg {  get; set; }
-            public int LexEnd { get; set; }
+            if (r + 1 < Code.Length && sym == '\r' && Code[r + 1] == '\n')
+            {
+                return 23; // Обрабатываем как отдельную строку
+            }
 
-            public tToken(int code, int attr, string name)
+            char charUp = Char.ToUpper(sym);
+            if (Letters.Contains(charUp)) return 17;
+            if (Numbers.Contains(charUp)) return 18;
+
+            return sym switch
             {
-                Code = code;
-                Attr = attr;
-                Name = name;
-            }
-            
-            public override string ToString()
-            {
-                //<код_токена, атрибут>
-                return $"<{Code}, {Attr}>";
-            }
+                ';' => 1,
+                ',' => 2,
+                '[' => 3,
+                ']' => 4,
+                '+' => 5,
+                '-' => 6,
+                '*' => 7,
+                '/' => 8,
+                '=' => 9,
+                '<' => 10,
+                '>' => 11,
+                '!' => 12,
+                '|' => 13,
+                '&' => 14,
+                '.' => 16,
+                '#' =>19,
+                ' '=> 20,
+                '\t'=>21,
+                '\n'=>22,
+                '\r'=>23,
+                '('=>24,
+                ')'=>25,
+                _ => 26
+            };
         }
+        public List<tToken> Scanner()
+        {
+            tokens.Clear(); // Очищаем список токенов
+            r = 0;          // Сбрасываем индекс символа
+            f = 0;
+
+            while (r < Code.Length) // Проходим по всему коду
+            {
+                tToken token = NextToken(); // Получаем следующий токен
+
+                if (token.Code != 0) // Если токен найден, добавляем в список
+                {
+                    tokens.Add(token);
+                }
+            }
+
+            return tokens; // Возвращаем список токенов
+        }
+        private tToken NextToken()
+        {
+            int state = 0;
+            int startPos = r;
+            string lex = "";
+            tToken result = new tToken();
+            bool tokenFound = false;
+
+            while (!tokenFound && r < Code.Length)
+            {
+                // Определяем строку таблицы переходов в зависимости от символа
+                int strTP = NomStrOfTP(Code[r]);
+                state = _TP[strTP - 1, state]; // Получаем новое состояние
+
+                if (state >= 0)
+                {
+                    CountPosition(); // Обновляем позицию
+                    r++; // Переходим к следующему символу
+                }
+
+                if (state < 0)
+                {
+                    state = -state; // Конечное состояние, найден токен
+
+                    if (state == 27) // Пробелы или новая строка
+                    {
+                        f = r;
+                        state = 0;
+                        continue; // Игнорируем и продолжаем
+                    }
+                    else if (state == 26) // Комментарии
+                    {
+                        if (r == Code.Length - 1)
+                        {
+                            f = r;
+                            return result; // Завершаем на последнем символе
+                        }
+                        else
+                        {
+                            countChar++;
+                            f = r + 1;
+                            r = f + 1;
+                            state = 0;
+                            continue;
+                        }
+                    }
+
+                    // Обработка идентификатора или ключевого слова
+                    if (state == 22) // Идентификатор
+                    {
+                        lex = Code.Substring(startPos, r - startPos);
+                        int keyIndex = BinarySearchLexKey(lex);
+
+                        if (keyIndex > 0) // Найдено ключевое слово.
+                        {
+                            result.Code = keyIndex;
+                            result.Name = ElemKeys[keyIndex].Name; 
+                            result.Attr = 0;
+                            result.LexBeg = f;
+                            result.LexEnd = r - 1;
+                        }
+                        else  //Создает Переменную ?
+                        {
+                            int idIndex = SearchLexId(lex);
+                            result.Attr = idIndex;
+                            result.Code = SostAndToken[state - 1].Code;
+                            result.Name = SostAndToken[state - 1].Name;
+                            result.LexBeg = f;
+                            result.LexEnd = r - 1;
+                        }
+
+                        tokenFound = true;
+                        break;
+                    }
+
+                    // Обработка чисел и операторов
+                    else if (state == 19 || state == 20 || state == 21) // Числа
+                    {
+                        lex = Code.Substring(startPos, r - startPos);
+                        int numIndex = SearchLexLbl(lex); // Найти метку числа
+
+                        result.Code = SostAndToken[state - 1].Code;
+                        result.Attr = numIndex;
+                        result.Name = SostAndToken[state - 1].Name;
+                        result.LexBeg = startPos;
+                        result.LexEnd = r - 1;
+                        tokenFound = true;
+                        break;
+                    }
+
+                    // Обработка операторов и других символов
+                    if (state > 0 && state <= SostAndToken.Length)
+                    {
+                        result.Code = SostAndToken[state - 1].Code;
+                        result.Name = SostAndToken[state - 1].Name;
+                        result.Attr = SostAndToken[state - 1].Attr;
+                        result.LexBeg = startPos;
+                        result.LexEnd = r - 1;
+                        tokenFound = true;
+                        break;
+                    }
+                    else
+                    {
+                        //throw new IndexOutOfRangeException($"Недопустимое состояние: {state}");
+                        return new tToken(0, 0, "error");
+                    }
+                }
+            }
+            r++;
+            return result; // Возвращаем результат токена
+        }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)

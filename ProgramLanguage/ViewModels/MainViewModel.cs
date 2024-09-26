@@ -1,6 +1,7 @@
 ﻿using ProgramLanguage.Model;
 using ReactiveUI;
 using System.ComponentModel;
+using System.Linq;
 using System.Reactive;
 namespace ProgramLanguage.ViewModels;
 
@@ -10,15 +11,14 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
     {
         lexA = new LexAnal();
         LexAnalysisCommand = ReactiveCommand.Create(LexAnalysis);
-
     }
     private void LexAnalysis()
     {
         lexA.Code = Code;
-        Lexem = lexA.Scanner();
+        var tokens = lexA.Scanner();
+        Lexem = string.Join("\n", tokens.Select(t => t.ToString()));
     }
-
-    public LexAnal lexA;
+    private readonly LexAnal lexA;
     public string TextErrors => "Текст с ошибками";
     public string TextNumError => "Позиция с ошибками";
 
@@ -41,9 +41,6 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
             OnPropertyChanged("Code");
         }
     }
-
-
-
 
     public ReactiveCommand<Unit, Unit> LexAnalysisCommand { get; }
 
