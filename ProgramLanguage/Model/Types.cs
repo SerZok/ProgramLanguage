@@ -65,7 +65,7 @@ namespace ProgramLanguage.Model
             public override readonly string ToString()
             {
                 //<код_токена, атрибут>
-                return $"<{Code}, {Attr}, {Name} >";
+                return $"<{Attr}, {Name}>";
             }
         }
     }

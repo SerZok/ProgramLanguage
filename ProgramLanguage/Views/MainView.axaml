@@ -26,7 +26,7 @@
 		<!--Нижняя панель с ошибками-->
 		<Grid Grid.Row="2" Grid.Column="0" Background="#777" RowDefinitions="*,*,*,Auto" Grid.ColumnSpan="3">
 			<Label Content="Позиция ошибки" Grid.ColumnSpan="2"/>
-			<TextBox Text="{Binding TextNumError}" Grid.Row="1" Grid.ColumnSpan="2" IsReadOnly="True"/>
+			<TextBox Text="{Binding PositionCode}" Grid.Row="1" Grid.ColumnSpan="2" IsReadOnly="True"/>
 			
 			<Label Content="Обнаруженные ошибки" Grid.Row="2" />
 			<TextBox Text="{Binding TextErrors}" Grid.Row="3" Height="100" IsReadOnly="True"/>

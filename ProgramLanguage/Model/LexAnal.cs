@@ -10,7 +10,7 @@ using static ProgramLanguage.Model.Types;
 
 namespace ProgramLanguage.Model
 {
-    public class LexAnal: INotifyPropertyChanged
+    public class LexAnal: ReactiveObject
     {
         public LexAnal()
         {
@@ -28,6 +28,9 @@ namespace ProgramLanguage.Model
             }
         }
 
+        /// <summary>
+        /// Конечные состояния (столбцы в _TP)
+        /// </summary>
         public tToken[] SostAndToken =
         [
             //code, attr, name
@@ -36,9 +39,9 @@ namespace ProgramLanguage.Model
             new (12, 0, "["),             // {-3}
             new (13, 0, "]"),             // {-4}
             new (14, 0, "+"),             // {-5}
-            new (15, 0, "+"),             // {-6}
+            new (15, 0, "-"),             // {-6}
             new (16, 0, "*"),             // {-7}
-            new (17, 0, "*"),             // {-8}
+            new (17, 0, "/"),             // {-8}
             new (18, 0, "as"),            // {-9}
             new (19, 0, "rel"),           // {-10}
             new (20, 0, "rel"),           // {-11}
@@ -66,8 +69,8 @@ namespace ProgramLanguage.Model
         /// </summary>
         private readonly int[,] _TP = new int[,]
         {
-            //Строки - символ
-            //Столбцы - состояния
+            //Строки  - символ в коде   (функция NomStrOfTP - определяет какую строчку брать)
+            //Столбцы - состояния       (массив SostAndToken [id+1] - определяет конечное состояние)
             //Крч.            0      1       2       3       4       5       6       7       8       9       10      11      12      13      14      15      16      17 
             /*1     ;   */  {-1,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
             /*2     ,   */	{-2,    -9,     -11,    -13,    -15,    -28,    -28,    -28,    -28,    -22,    -20,     11,    -27,    -28,    -19,    -21,    -28,    -25},
@@ -104,6 +107,7 @@ namespace ProgramLanguage.Model
         private List<tElemLbl> Lbls = new List<tElemLbl>();
         private List<tElemIde> Idents = new List<tElemIde>();
         private List<tElemKey> ElemKeys = new List<tElemKey>{
+               //name           lex
             new ("and",         "*"),
             new ("beginBlock",  "beginBlock"),		//{1}
 	        new ("end",         "end" ),			//{3}
@@ -121,7 +125,18 @@ namespace ProgramLanguage.Model
         private int KolId = 2;
 
         private int countLines = 1;
+        public int CountLines
+        {
+            get => countLines;
+            set=> this.RaiseAndSetIfChanged(ref countLines, value);
+        }
+
         private int countChar = 1;
+        public int CountChar
+        {
+            get => countLines;
+            set => this.RaiseAndSetIfChanged(ref countLines, value);
+        }
 
         /// <summary>
         /// Первый символ
@@ -129,7 +144,7 @@ namespace ProgramLanguage.Model
         private int f = 0;
 
         /// <summary>
-        /// Последний символ
+        /// Текущий символ
         /// </summary>
         private int r = 0;
         public void InitDataType()
@@ -144,12 +159,10 @@ namespace ProgramLanguage.Model
         }
         private int BinarySearchLexKey(string lex)
         {
-            lex = lex.ToUpper();
             return ElemKeys.FindIndex(x => x.Lex == lex);
         }
         private int SearchLexLbl(string lex)
         {
-            lex = lex.ToUpper();
             var lblIndex = Lbls.FindIndex(l => l.Lex == lex);
             if (lblIndex == -1)
             {
@@ -167,9 +180,8 @@ namespace ProgramLanguage.Model
         /// <returns></returns>
         private int SearchLexId(string lex) 
         {
-            //lex = lex.ToUpper();
             var idIndex = Idents.FindIndex(i => i.Lex == lex);
-            if (idIndex == -1) //Если не  нашел переменную
+            if (idIndex == -1) //Если не нашел лексему, то создаем переменную
             {
                 KolId++;
                 Idents.Add(new tElemIde { Lex = lex, Cat = 0, Tip = 0, Size = 0, Addr = -1 });
@@ -179,19 +191,10 @@ namespace ProgramLanguage.Model
         }
         public void CountPosition()
         {
-            // Если это символ возврата каретки (\r), игнорируем его, так как следующая может быть \n
-            if (Code[r] == '\r' && r + 1 < Code.Length && Code[r + 1] == '\n')
+            if (Code[r] == '\n' )
             {
-                // Обработка для \r\n
-                countLines++;    // Увеличиваем счётчик строк
+                countLines++; 
                 countChar = 1;   // Обнуляем счётчик символов для новой строки
-                r++;             // Пропускаем \n после \r
-            }
-            else if (Code[r] == '\n' || Code[r] == '\r')
-            {
-                // Обработка для одиночных \n или \r (если они не идут вместе как \r\n)
-                countLines++;
-                countChar = 1;
             }
             else
             {
@@ -205,17 +208,12 @@ namespace ProgramLanguage.Model
         private List<tToken> tokens = new List<tToken>();
         
         /// <summary>
-        /// Поиск символа в таблице состояний _TP
+        /// Поиск символа в таблице состояний _TP (Номер в строке)
         /// </summary>
         /// <param name="sym"></param>
         /// <returns></returns>
         private int NomStrOfTP(char sym)
         {
-            if (r + 1 < Code.Length && sym == '\r' && Code[r + 1] == '\n')
-            {
-                return 23; // Обрабатываем как отдельную строку
-            }
-
             char charUp = Char.ToUpper(sym);
             if (Letters.Contains(charUp)) return 17;
             if (Numbers.Contains(charUp)) return 18;
@@ -241,7 +239,7 @@ namespace ProgramLanguage.Model
                 ' '=> 20,
                 '\t'=>21,
                 '\n'=>22,
-                '\r'=>23,
+                '\r'=>20,
                 '('=>24,
                 ')'=>25,
                 _ => 26
@@ -252,14 +250,22 @@ namespace ProgramLanguage.Model
             tokens.Clear(); // Очищаем список токенов
             r = 0;          // Сбрасываем индекс символа
             f = 0;
+            CountChar = 0;
+            CountLines = 0;
 
-            while (r < Code.Length) // Проходим по всему коду
+
+            while (r <= Code.Length) // Проходим по всему коду
             {
                 tToken token = NextToken(); // Получаем следующий токен
 
                 if (token.Code != 0) // Если токен найден, добавляем в список
                 {
                     tokens.Add(token);
+                }
+                if (token.Code == -1)
+                {
+                    //Сообщить о плохом токене
+                    break;
                 }
             }
 
@@ -355,7 +361,7 @@ namespace ProgramLanguage.Model
                         break;
                     }
 
-                    // Обработка операторов и других символов
+                    //// Обработка операторов и других символов
                     if (state > 0 && state <= SostAndToken.Length)
                     {
                         result.Code = SostAndToken[state - 1].Code;
@@ -366,10 +372,10 @@ namespace ProgramLanguage.Model
                         tokenFound = true;
                         break;
                     }
-                    else
+                    else //Пока сгенерировал плохой токен, возможно не надо
                     {
                         //throw new IndexOutOfRangeException($"Недопустимое состояние: {state}");
-                        return new tToken(0, 0, "error");
+                        return new tToken(-1, -1, "error");
                     }
                 }
             }
