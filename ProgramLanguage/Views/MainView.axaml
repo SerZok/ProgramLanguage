@@ -15,7 +15,13 @@
 	<Grid Background="#666" ShowGridLines="False" ColumnDefinitions="*,*,*" RowDefinitions="Auto,*,Auto">
 		
 	<!--Верхние кнопочьки-->
-		<StackPanel Orientation="Horizontal" Grid.ColumnSpan="3" Background="#222" Spacing="5">
+		<StackPanel 
+			Orientation="Horizontal" 
+			Grid.ColumnSpan="3" 
+			Background="#222" 
+			Spacing="5">
+			
+			<Button Content="Из файла" Click="OpenFileButton_Clicked"/>
 			<Button Content="Лексический анализ" Command="{Binding LexAnalysisCommand}"/>
 			<Button Content="LL-Разбор"  />
 		</StackPanel>

@@ -15,6 +15,7 @@ public class MainViewModel : ViewModelBase
         lexA = new LexAnal();
         LexAnalysisCommand = ReactiveCommand.Create(LexAnalysis);
     }
+    public string SelectedFilePath { get;set; }
     private void LexAnalysis()
     {
         lexA.Code = Code;
@@ -67,4 +68,5 @@ public class MainViewModel : ViewModelBase
 
     }
     public ReactiveCommand<Unit, Unit> LexAnalysisCommand { get; }
+    public ReactiveCommand<Unit, Unit> FileReadCommand { get; }
 }

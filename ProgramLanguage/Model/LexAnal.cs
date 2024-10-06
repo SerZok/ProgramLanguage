@@ -140,8 +140,8 @@ namespace ProgramLanguage.Model
         private int countChar = 1;
         public int CountChar
         {
-            get => countLines;
-            set => this.RaiseAndSetIfChanged(ref countLines, value);
+            get => countChar;
+            set => this.RaiseAndSetIfChanged(ref countChar, value);
         }
 
         /// <summary>
@@ -153,6 +153,11 @@ namespace ProgramLanguage.Model
         /// Текущий символ
         /// </summary>
         private int r = 0;
+
+        /// <summary>
+        /// Очиста таблица Idents (индентефикаторов);
+        /// Инициализация int float и bool как иденетфикаторов
+        /// </summary>
         public void InitDataType()
         {
             Idents.Clear();
@@ -199,12 +204,12 @@ namespace ProgramLanguage.Model
         {
             if (Code[r] == '\n')
             {
-                countLines++;
-                countChar = 1;   // Обнуляем счётчик символов для новой строки
+                CountLines++;
+                CountChar = 1;   // Обнуляем счётчик символов для новой строки
             }
             else
             {
-                countChar++; // Увеличиваем счётчик символов для любой другой ситуации
+                CountChar++; // Увеличиваем счётчик символов для любой другой ситуации
             }
         }
 
@@ -258,8 +263,8 @@ namespace ProgramLanguage.Model
             f = 0;
             InitDataType();
 
-            CountChar = 0;
-            CountLines = 0;
+            CountChar = 1;
+            CountLines = 1;
             IsError = false;
 
             while (r <= Code.Length) // Проходим по всему коду
