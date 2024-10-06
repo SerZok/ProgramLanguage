@@ -21,12 +21,28 @@
 		</StackPanel>
 		
 		<!--Текст программы-->
-		<TextBox Text="{Binding Code}" Grid.Row="1" Watermark="Текст программы" AcceptsReturn="True" Grid.Column="0" Margin="5" Grid.ColumnSpan="2"/>
+		<TextBox
+			Name="TextBoxCode"
+			Text="{Binding Code, Mode=TwoWay}"  
+			Grid.Row="1"
+			Grid.Column="0" 
+			Grid.ColumnSpan="2"
+			Watermark="Текст программы" 
+			AcceptsReturn="True" 
+			Margin="5" 
+			/>
 		
 		<!--Нижняя панель с ошибками-->
-		<Grid Grid.Row="2" Grid.Column="0" Background="#777" RowDefinitions="*,*,*,Auto" Grid.ColumnSpan="3">
+		<Grid 
+			Grid.Row="2" 
+			Grid.Column="0" 
+			Grid.ColumnSpan="3"
+			RowDefinitions="*,*,*,Auto" 
+			Background="#777" 
+			>
+			
 			<Label Content="Позиция ошибки" Grid.ColumnSpan="2"/>
-			<TextBox Text="{Binding PositionCode}" Grid.Row="1" Grid.ColumnSpan="2" IsReadOnly="True"/>
+			<TextBox Name="TextBoxPos" Text="{Binding PositionCode}" Grid.Row="1" Grid.ColumnSpan="2" IsReadOnly="True"/>
 			
 			<Label Content="Обнаруженные ошибки" Grid.Row="2" />
 			<TextBox Text="{Binding TextErrors}" Grid.Row="3" Height="100" IsReadOnly="True"/>

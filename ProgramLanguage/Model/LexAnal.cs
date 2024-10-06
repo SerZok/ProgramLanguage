@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ using static ProgramLanguage.Model.Types;
 
 namespace ProgramLanguage.Model
 {
-    public class LexAnal: ReactiveObject
+    public class LexAnal : ReactiveObject
     {
         public LexAnal()
         {
@@ -27,6 +28,11 @@ namespace ProgramLanguage.Model
                 OnPropertyChanged("Code");
             }
         }
+
+        private bool _isError = false;
+        public bool IsError { get => _isError; private set => _isError = value; }
+        private char _charError;
+        public char CharError { get => _charError; private set => _charError = value; }
 
         /// <summary>
         /// Конечные состояния (столбцы в _TP)
@@ -122,13 +128,13 @@ namespace ProgramLanguage.Model
         };
 
         private int KolLbl = -1;
-        private int KolId = 2;
+        private int KolId = 2; //id Идентефикаторов
 
         private int countLines = 1;
         public int CountLines
         {
             get => countLines;
-            set=> this.RaiseAndSetIfChanged(ref countLines, value);
+            set => this.RaiseAndSetIfChanged(ref countLines, value);
         }
 
         private int countChar = 1;
@@ -150,9 +156,9 @@ namespace ProgramLanguage.Model
         public void InitDataType()
         {
             Idents.Clear();
-            Idents.Add(new tElemIde { Lex = "int",      Cat = 1, Tip = 1, Size = 4, Addr = -1 });
-            Idents.Add(new tElemIde { Lex = "float",    Cat = 1, Tip = 2, Size = 4, Addr = -1 });
-            Idents.Add(new tElemIde { Lex = "bool",     Cat = 1, Tip = 3, Size = 1, Addr = -1 });
+            Idents.Add(new tElemIde { Lex = "int", Cat = 1, Tip = 1, Size = 4, Addr = -1 });
+            Idents.Add(new tElemIde { Lex = "float", Cat = 1, Tip = 2, Size = 4, Addr = -1 });
+            Idents.Add(new tElemIde { Lex = "bool", Cat = 1, Tip = 3, Size = 1, Addr = -1 });
 
             KolLbl = -1;
             KolId = 2;
@@ -178,7 +184,7 @@ namespace ProgramLanguage.Model
         /// </summary>
         /// <param name="lex"></param>
         /// <returns></returns>
-        private int SearchLexId(string lex) 
+        private int SearchLexId(string lex)
         {
             var idIndex = Idents.FindIndex(i => i.Lex == lex);
             if (idIndex == -1) //Если не нашел лексему, то создаем переменную
@@ -191,9 +197,9 @@ namespace ProgramLanguage.Model
         }
         public void CountPosition()
         {
-            if (Code[r] == '\n' )
+            if (Code[r] == '\n')
             {
-                countLines++; 
+                countLines++;
                 countChar = 1;   // Обнуляем счётчик символов для новой строки
             }
             else
@@ -206,7 +212,7 @@ namespace ProgramLanguage.Model
         /// Список токенов
         /// </summary>
         private List<tToken> tokens = new List<tToken>();
-        
+
         /// <summary>
         /// Поиск символа в таблице состояний _TP (Номер в строке)
         /// </summary>
@@ -235,13 +241,13 @@ namespace ProgramLanguage.Model
                 '|' => 13,
                 '&' => 14,
                 '.' => 16,
-                '#' =>19,
-                ' '=> 20,
-                '\t'=>21,
-                '\n'=>22,
-                '\r'=>20,
-                '('=>24,
-                ')'=>25,
+                '#' => 19,
+                ' ' => 20,
+                '\t' => 21,
+                '\n' => 22,
+                '\r' => 23,
+                '(' => 24,
+                ')' => 25,
                 _ => 26
             };
         }
@@ -250,9 +256,11 @@ namespace ProgramLanguage.Model
             tokens.Clear(); // Очищаем список токенов
             r = 0;          // Сбрасываем индекс символа
             f = 0;
+            InitDataType();
+
             CountChar = 0;
             CountLines = 0;
-
+            IsError = false;
 
             while (r <= Code.Length) // Проходим по всему коду
             {
@@ -265,6 +273,7 @@ namespace ProgramLanguage.Model
                 if (token.Code == -1)
                 {
                     //Сообщить о плохом токене
+                    IsError = true;
                     break;
                 }
             }
@@ -290,7 +299,6 @@ namespace ProgramLanguage.Model
                     CountPosition(); // Обновляем позицию
                     r++; // Переходим к следующему символу
                 }
-
                 if (state < 0)
                 {
                     state = -state; // Конечное состояние, найден токен
@@ -327,7 +335,7 @@ namespace ProgramLanguage.Model
                         if (keyIndex > 0) // Найдено ключевое слово.
                         {
                             result.Code = keyIndex;
-                            result.Name = ElemKeys[keyIndex].Name; 
+                            result.Name = ElemKeys[keyIndex].Name;
                             result.Attr = 0;
                             result.LexBeg = f;
                             result.LexEnd = r - 1;
@@ -372,9 +380,9 @@ namespace ProgramLanguage.Model
                         tokenFound = true;
                         break;
                     }
-                    else //Пока сгенерировал плохой токен, возможно не надо
+                    else
                     {
-                        //throw new IndexOutOfRangeException($"Недопустимое состояние: {state}");
+                        CharError = Code[r];
                         return new tToken(-1, -1, "error");
                     }
                 }
